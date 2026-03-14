@@ -9,8 +9,17 @@
 </head>
 <body>
     <div id="painel-controlo">
-    <h3>Área de Interesse</h3>
+    <h3>1. Área de Interesse</h3>
     <input type="file" id="upload-shapefile" accept=".zip">
+
+    <div id="busca-imagens" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px;">
+        <h3>2. Escolher Data</h3>
+        <input type="date" id="data-imagem" style="width: 100%; margin-bottom: 10px;">
+        <button id="btn-buscar" style="width: 100%; padding: 8px; cursor: pointer;">Buscar Imagens do Sentinel-2</button>
+        
+        <div id="resultados-busca" style="margin-top: 15px;"></div>
+    </div>
+</div>
 </div>
 
     <div id="map"></div>
