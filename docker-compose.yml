@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+    image: backend-webgis
+    container_name: webgis-django
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "python manage.py migrate && 
+             python manage.py runserver 0.0.0.0:8000"
