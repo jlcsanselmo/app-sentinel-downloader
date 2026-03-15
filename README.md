@@ -1,6 +1,6 @@
 # APP Sentinel-2 Downloader
 
-![APP Preview](![alt text](image.png))
+![APP Preview](![alt text](image-1.png))
 
 > Uma aplicação WebGIS Cloud-Native para busca e extração automatizada de imagens de satélite Sentinel-2 (Multiespectral) utilizando a API STAC da AWS.
 
