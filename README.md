@@ -1,6 +1,6 @@
 # APP Sentinel-2 Downloader
 
-![APP Preview](![alt text](image-1.png))
+APP Preview![alt text](image-1.png)
 
 > Uma aplicação WebGIS Cloud-Native para busca e extração automatizada de imagens de satélite Sentinel-2 (Multiespectral) utilizando a API STAC da AWS.
 
@@ -12,8 +12,8 @@ O sistema processa e empilha (*layer stack*) os ficheiros Cloud Optimized GeoTIF
 
 ## Principais Funcionalidades
 
-- ** Ingestão Espacial:** Upload de Shapefiles (`.zip`) e extração automática de Bounding Boxes (EPSG:4326) utilizando GeoPandas.
-- ** Busca Inteligente (STAC API):** Integração com o catálogo `earth-search` da AWS para localizar passagens do satélite Sentinel-2 num raio temporal de 30 dias.
+- **Ingestão Espacial:** Upload de Shapefiles (`.zip`) e extração automática de Bounding Boxes (EPSG:4326) utilizando GeoPandas.
+- **Busca Inteligente (STAC API):** Integração com o catálogo `earth-search` da AWS para localizar passagens do satélite Sentinel-2 num raio temporal de 30 dias.
 - **Visualização Interativa:** Renderização da Bounding Box e da grade (footprint) do satélite em tempo real utilizando MapLibre GL JS.
 - **Geoprocessamento em Nuvem:** Leitura e empilhamento de múltiplas bandas multiespectrais em um único arquivo `.tif` utilizando a biblioteca Rasterio.
 - **Ambiente Isolado:** Arquitetura 100% baseada em Docker (Frontend e Backend isolados), garantindo que o projeto rode em qualquer máquina sem conflitos de dependências.
