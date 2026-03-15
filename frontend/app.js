@@ -1,5 +1,8 @@
-// Inicializando o mapa
+// =======================================================================
+// 1. INICIALIZAÇÃO DO MAPA (MAPLIBRE)
+// =======================================================================
 let bboxAtual = null;
+
 const map = new maplibregl.Map({
     container: 'map',
     style: {
@@ -24,15 +27,15 @@ const map = new maplibregl.Map({
             }
         ]
     },
-    center: [-47.8103, -21.1704], // Coordenadas iniciais (Ribeirão Preto!)
+    center: [-47.8103, -21.1704], // Ribeirão Preto
     zoom: 10
 });
 
 map.addControl(new maplibregl.NavigationControl());
 
-// -------------------------------------------------------------------
-// 1. FUNÇÃO DO UPLOAD DO SHAPEFILE (Desenha o quadrado vermelho)
-// -------------------------------------------------------------------
+// =======================================================================
+// 2. UPLOAD DO SHAPEFILE (Extrai BBOX e desenha polígono vermelho)
+// =======================================================================
 document.getElementById('upload-shapefile').addEventListener('change', async function(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -65,11 +68,13 @@ document.getElementById('upload-shapefile').addEventListener('change', async fun
                 ]
             ];
 
+            // Limpa o desenho anterior se houver
             if (map.getSource('area-interesse')) {
                 map.removeLayer('area-interesse-layer');
                 map.removeSource('area-interesse');
             }
 
+            // Adiciona a nova área ao mapa
             map.addSource('area-interesse', {
                 'type': 'geojson',
                 'data': {
@@ -89,7 +94,7 @@ document.getElementById('upload-shapefile').addEventListener('change', async fun
                 }
             });
 
-            // Dá o zoom para a área do shapefile
+            // Dá o zoom automático para a área do shapefile
             map.fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding: 50 });
 
         } else {
@@ -101,9 +106,9 @@ document.getElementById('upload-shapefile').addEventListener('change', async fun
     }
 });
 
-// -------------------------------------------------------------------
-// 2. FUNÇÃO DA BUSCA (Desenha a lista de imagens na tela)
-// -------------------------------------------------------------------
+// =======================================================================
+// 3. BUSCA DE IMAGENS SENTINEL-2 (Lista, Grade e Download)
+// =======================================================================
 document.getElementById('btn-buscar').addEventListener('click', async function() {
     const dataEscolhida = document.getElementById('data-imagem').value;
     
@@ -140,28 +145,109 @@ document.getElementById('btn-buscar').addEventListener('click', async function()
             titulo.innerText = `${data.quantidade} Imagens Encontradas:`;
             divResultados.appendChild(titulo);
 
-            // Cria um cartão para cada imagem
+            // Cria um cartão para cada imagem encontrada
             data.imagens.forEach(img => {
                 const card = document.createElement('div');
                 card.className = 'card-imagem';
                 
-                // Formata as nuvens para 2 casas decimais e decide a cor
                 const nuvens = parseFloat(img.nuvens).toFixed(2);
                 let corNuvem = nuvens < 10 ? '#28a745' : (nuvens < 50 ? '#ffc107' : '#dc3545');
 
+                // Prepara os dados complexos para guardar nos botões HTML
+                const geojsonStr = JSON.stringify(img.geometria).replace(/"/g, '&quot;');
+                const bandasStr = JSON.stringify(img.bandas).replace(/"/g, '&quot;');
+
                 card.innerHTML = `
                     <h4>📅 ${img.data_captura}</h4>
-                    <p>☁️ Cobertura de Nuvens: <span style="color: ${corNuvem}; font-weight: bold;">${nuvens}%</span></p>
-                    <button class="btn-ver-mapa" data-id="${img.id}">Visualizar no Mapa</button>
+                    <p>☁️ Nuvens: <span style="color: ${corNuvem}; font-weight: bold;">${nuvens}%</span> | ID: <span style="font-size: 10px;">${img.id.split('_')[1]}</span></p>
+                    
+                    <button class="btn-ver-grade" style="background: #6c757d; color: white; padding: 5px; border: none; width: 100%; margin-bottom: 5px; cursor: pointer;" data-geo="${geojsonStr}">📍 Ver Grade no Mapa</button>
+                    
+                    <button class="btn-download-stack" style="background: #28a745; color: white; padding: 8px; border: none; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer;" data-bandas="${bandasStr}">📥 Baixar Imagem (Bandas 2, 3, 4 e 8)</button>
                 `;
                 divResultados.appendChild(card);
             });
 
-            // Adiciona a ação de clique nos novos botões
-            document.querySelectorAll('.btn-ver-mapa').forEach(btn => {
+            // -----------------------------------------------------------
+            // AÇÃO A: Desenhar a GRADE do satélite no mapa
+            // -----------------------------------------------------------
+            document.querySelectorAll('.btn-ver-grade').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const imageId = this.getAttribute('data-id');
-                    alert('Em breve: A imagem ' + imageId + ' vai aparecer magicamente no mapa! 🛰️');
+                    const geometria = JSON.parse(this.getAttribute('data-geo'));
+
+                    if (map.getSource('grade-satelite')) {
+                        map.removeLayer('grade-satelite-layer');
+                        map.removeSource('grade-satelite');
+                    }
+
+                    // Desenha apenas o contorno (linha tracejada) da área fotografada
+                    map.addSource('grade-satelite', {
+                        'type': 'geojson',
+                        'data': { 'type': 'Feature', 'geometry': geometria }
+                    });
+
+                    map.addLayer({
+                        'id': 'grade-satelite-layer',
+                        'type': 'line',
+                        'source': 'grade-satelite',
+                        'paint': {
+                            'line-color': '#0000ff', // Linha azul
+                            'line-width': 2,
+                            'line-dasharray': [2, 2] // Efeito tracejado
+                        }
+                    });
+                });
+            });
+
+            // -----------------------------------------------------------
+            // AÇÃO B: Fazer o Download e Recorte das Bandas no Backend
+            // -----------------------------------------------------------
+            document.querySelectorAll('.btn-download-stack').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const bandas = JSON.parse(this.getAttribute('data-bandas'));
+                    const btnClicado = this;
+                    
+                    // Feedback visual de que está a carregar
+                    btnClicado.innerText = 'Processando recorte na nuvem... ⏳';
+                    btnClicado.style.background = '#ffc107'; // Amarelo
+                    btnClicado.disabled = true;
+
+                    try {
+                        // Envia as URLs das bandas e o BBOX para o Python usar o Rasterio
+                        const response = await fetch('http://localhost:8000/api/processar-bandas/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ bandas: bandas, bbox: bboxAtual })
+                        });
+
+                        if (response.ok) {
+                            // Recebe o arquivo .tif como um "Blob" e força o navegador a fazer o download
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'sentinel_stack_B2_B3_B4_B8.tif'; // Nome que vai ser guardado no seu PC
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            
+                            // Volta o botão a verde
+                            btnClicado.innerText = '✅ Download Concluído!';
+                            btnClicado.style.background = '#28a745';
+                        } else {
+                            const data = await response.json();
+                            alert('Erro no processamento: ' + data.mensagem);
+                            btnClicado.innerText = '📥 Tentar Novamente';
+                            btnClicado.style.background = '#dc3545';
+                            btnClicado.disabled = false;
+                        }
+                    } catch (error) {
+                        console.error('Erro:', error);
+                        alert('Erro ao contactar o servidor.');
+                        btnClicado.innerText = '📥 Tentar Novamente';
+                        btnClicado.style.background = '#dc3545';
+                        btnClicado.disabled = false;
+                    }
                 });
             });
 

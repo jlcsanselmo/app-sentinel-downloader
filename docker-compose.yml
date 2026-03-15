@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    build: 
+    build:
       context: ./backend
     image: backend-webgis
     container_name: webgis-django
@@ -11,15 +11,15 @@ services:
     volumes:
       - ./backend:/app
     command: >
-      sh -c "python manage.py migrate && 
+      sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
 
   frontend:
-      build:
-        context: ./frontend
-      image: frontend-webgis
-      container_name: webgis-mapa
-      ports:
-        - "3000:80" # A porta 3000 do seu PC vai acessar a 80 do Nginx
-      volumes:
-        - ./frontend:/usr/share/nginx/html
+    build:
+      context: ./frontend
+    image: frontend-webgis
+    container_name: webgis-mapa
+    ports:
+      - "3000:80" # A porta 3000 do seu PC vai acessar a 80 do Nginx
+    volumes:
+      - ./frontend:/usr/share/nginx/html
