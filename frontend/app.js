@@ -1,6 +1,4 @@
-// =======================================================================
-// 1. INICIALIZAÇÃO DO MAPA
-// =======================================================================
+
 let bboxAtual = null;
 
 const map = new maplibregl.Map({
@@ -24,9 +22,7 @@ const map = new maplibregl.Map({
 });
 map.addControl(new maplibregl.NavigationControl());
 
-// =======================================================================
-// LÓGICA DA BARRA DE PROGRESSO INTELIGENTE
-// =======================================================================
+
 let progressInterval;
 
 function startProgress() {
@@ -83,9 +79,7 @@ function finishProgress(sucesso, mensagemErro = '') {
     }
 }
 
-// =======================================================================
-// 2. UPLOAD DO SHAPEFILE
-// =======================================================================
+
 document.getElementById('upload-shapefile').addEventListener('change', async function(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -122,9 +116,7 @@ document.getElementById('upload-shapefile').addEventListener('change', async fun
     }
 });
 
-// =======================================================================
-// 3. BUSCA E DOWNLOAD
-// =======================================================================
+
 document.getElementById('btn-buscar').addEventListener('click', async function() {
     const dataEscolhida = document.getElementById('data-imagem').value;
     if (!dataEscolhida || !bboxAtual) { alert('Escolha a data e o shapefile.'); return; }
